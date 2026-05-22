@@ -64,18 +64,11 @@ body {
 
 .camera-wrap { width: 100%; }
 
-/* 스캔 전: 크기는 유지하되 안 보이게 (권한 요청용 DOM 필요) */
-.reader-hidden {
+/* 스캔 전: 크기 유지 (DOM 존재해야 권한 요청 가능) */
+.reader-idle {
   aspect-ratio: 1 / 1;
   border-radius: 12px;
   background: #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.reader-hidden::after {
-  content: '📷';
-  font-size: 64px;
 }
 
 #reader {

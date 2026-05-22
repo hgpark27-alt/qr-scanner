@@ -14,52 +14,55 @@ function parseLabel(raw) {
 }
 
 export default function App() {
-  const [started, setStarted] = useState(false)
-  const [tab, setTab]         = useState('scan')   // 'scan' | 'result'
-  const [items, setItems]     = useState([])
-  const [error, setError]     = useState(null)
+  const [scanning, setScanning] = useState(false)
+  const [tab, setTab]           = useState('scan')
+  const [items, setItems]       = useState([])
+  const [error, setError]       = useState(null)
   const scannerRef = useRef(null)
   const seenRef    = useRef(new Set())
 
-  const launch = async () => {
-    setError(null)
+  // 버튼은 상태만 바꿈 → useEffect가 DOM 업데이트 후 카메라 초기화
+  const startScan = () => { setError(null); setScanning(true) }
+  const stopScan  = () => setScanning(false)
+
+  const switchTab = (next) => {
+    if (next === 'result') setScanning(false)
+    setTab(next)
+  }
+
+  useEffect(() => {
+    if (!scanning) {
+      scannerRef.current?.stop().catch(() => {})
+      return
+    }
+
     const scanner = new Html5Qrcode('reader', {
       formatsToSupport: [
         Html5QrcodeSupportedFormats.QR_CODE,
         Html5QrcodeSupportedFormats.DATA_MATRIX,
       ],
-      useBarCodeDetectorIfSupported: true,
       verbose: false,
     })
     scannerRef.current = scanner
-    try {
-      await scanner.start(
-        { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } },
-        { fps: 10 },
-        (text) => {
-          if (seenRef.current.has(text)) return
-          seenRef.current.add(text)
-          setItems(prev => [parseLabel(text), ...prev])
-        },
-        () => {}
-      )
-      setStarted(true)
-    } catch (e) {
-      setStarted(false)
-      setError('카메라 권한 오류. Safari 설정 → 카메라 → 허용 후 재시도하세요.')
-    }
-  }
 
-  const stop = () => {
-    scannerRef.current?.stop().catch(() => {})
-    setStarted(false)
-  }
+    scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10 },
+      (text) => {
+        if (seenRef.current.has(text)) return
+        seenRef.current.add(text)
+        setItems(prev => [parseLabel(text), ...prev])
+      },
+      () => {}
+    ).catch(() => {
+      setError('카메라 권한을 허용해주세요.')
+      setScanning(false)
+    })
 
-  const switchTab = (next) => {
-    setTab(next)
-    // 결과 탭 → 카메라 일시 정지
-    if (next === 'result' && started) stop()
-  }
+    return () => { scanner.stop().catch(() => {}) }
+  }, [scanning])
+
+  useEffect(() => () => { scannerRef.current?.stop().catch(() => {}) }, [])
 
   const clearAll = () => { setItems([]); seenRef.current.clear() }
 
@@ -77,43 +80,35 @@ export default function App() {
     }
   }
 
-  useEffect(() => () => { scannerRef.current?.stop().catch(() => {}) }, [])
-
   return (
     <div className="app">
-      {/* 탭 헤더 */}
       <div className="tab-bar">
-        <button
-          className={`tab ${tab === 'scan' ? 'active' : ''}`}
-          onClick={() => setTab('scan')}
-        >스캔</button>
-        <button
-          className={`tab ${tab === 'result' ? 'active' : ''}`}
-          onClick={() => switchTab('result')}
-        >
+        <button className={`tab ${tab === 'scan' ? 'active' : ''}`} onClick={() => setTab('scan')}>
+          스캔
+        </button>
+        <button className={`tab ${tab === 'result' ? 'active' : ''}`} onClick={() => switchTab('result')}>
           결과 {items.length > 0 && <span className="badge">{items.length}</span>}
         </button>
       </div>
 
-      {/* 스캔 탭 */}
       {tab === 'scan' && (
         <div className="scan-panel">
+          {/* #reader 는 항상 DOM에 존재해야 함 */}
           <div className="camera-wrap">
-            <div id="reader" className={started ? '' : 'reader-hidden'} />
+            <div id="reader" className={scanning ? '' : 'reader-idle'} />
           </div>
-          {started ? (
-            <button className="btn-cancel" onClick={stop}>스캔 종료</button>
+          {scanning ? (
+            <button className="btn-cancel" onClick={stopScan}>스캔 종료</button>
           ) : (
-            <button className="btn-primary" onClick={launch}>스캔 시작</button>
+            <button className="btn-primary" onClick={startScan}>📷 스캔 시작</button>
           )}
           {error && <p className="error">{error}</p>}
           {items.length > 0 && (
-            <p className="scan-count">인식 {items.length}개 — 결과 탭에서 확인</p>
+            <p className="scan-count">인식 {items.length}개 — 결과 탭 확인</p>
           )}
         </div>
       )}
 
-      {/* 결과 탭 */}
       {tab === 'result' && (
         <div className="result-panel">
           <div className="result-actions">
