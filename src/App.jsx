@@ -182,7 +182,23 @@ export default function App() {
             style={{ display: scanning ? 'block' : 'none',
                      position: 'absolute', inset: 0,
                      width: '100%', height: '100%', objectFit: 'cover' }} />
-          {!scanning && <div className="cam-idle">📷</div>}
+          {scanning && <>
+            <div className="scan-corner scan-corner--tl" />
+            <div className="scan-corner scan-corner--tr" />
+            <div className="scan-corner scan-corner--bl" />
+            <div className="scan-corner scan-corner--br" />
+          </>}
+          {!scanning && (
+            <div className="cam-idle">
+              <div className="cam-idle-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </div>
+              <span className="cam-idle-text">카메라 시작</span>
+            </div>
+          )}
         </div>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 

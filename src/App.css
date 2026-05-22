@@ -4,7 +4,7 @@ html, body { height: 100%; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f2f2f7;
+  background: #1c1c1e;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -17,14 +17,14 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #f2f2f7;
+  background: #1c1c1e;
 }
 
-/* ── 탭 헤더 ── */
+/* ── 탭 바 ── */
 .tab-bar {
   display: flex;
-  background: #fff;
-  border-bottom: 1px solid #c6c6c8;
+  background: #2c2c2e;
+  border-bottom: 1px solid #3a3a3c;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -32,102 +32,153 @@ body {
 }
 .tab {
   flex: 1;
-  padding: 14px 8px;
+  padding: 16px 8px;
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
   font-size: 15px;
   font-weight: 600;
-  color: #8e8e93;
+  color: #636366;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  letter-spacing: -0.2px;
   transition: color .15s;
 }
-.tab.active { color: #007aff; border-bottom-color: #007aff; }
+.tab.active { color: #0a84ff; border-bottom-color: #0a84ff; }
 .badge {
-  background: #007aff;
+  background: #0a84ff;
   color: #fff;
   font-size: 11px;
   font-weight: 700;
   border-radius: 99px;
   padding: 2px 7px;
-  margin-left: 2px;
 }
 
 /* ── 스캔 패널 ── */
 .scan-panel {
   flex: 1;
+  display: flex;
   flex-direction: column;
   padding: 16px;
   gap: 14px;
 }
 
-/* 카메라 박스 — 정사각형, video 가 꽉 채움 */
+/* 카메라 박스 */
 .camera-wrap {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
   background: #000;
-  position: relative;   /* 자식 absolute 기준 */
+  position: relative;
   flex-shrink: 0;
 }
 
+/* 대기 상태 플레이스홀더 */
+.cam-idle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #636366;
+}
+.cam-idle-icon {
+  width: 56px;
+  height: 56px;
+  border: 2px solid #3a3a3c;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cam-idle-icon svg { opacity: .5; }
+.cam-idle-text {
+  font-size: 14px;
+  color: #48484a;
+  font-weight: 500;
+}
+
+/* 스캔 가이드 오버레이 */
+.scan-guide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.scan-guide::before,
+.scan-guide::after {
+  content: '';
+  position: absolute;
+  width: 52px;
+  height: 52px;
+}
+/* 4 모서리 브래킷 */
+.scan-corner {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  pointer-events: none;
+}
+.scan-corner--tl { top: 18px; left: 18px; border-top: 3px solid #fff; border-left: 3px solid #fff; border-radius: 4px 0 0 0; }
+.scan-corner--tr { top: 18px; right: 18px; border-top: 3px solid #fff; border-right: 3px solid #fff; border-radius: 0 4px 0 0; }
+.scan-corner--bl { bottom: 18px; left: 18px; border-bottom: 3px solid #fff; border-left: 3px solid #fff; border-radius: 0 0 0 4px; }
+.scan-corner--br { bottom: 18px; right: 18px; border-bottom: 3px solid #fff; border-right: 3px solid #fff; border-radius: 0 0 4px 0; }
+
+/* 버튼 */
 .btn-start {
   width: 100%;
-  padding: 18px;
-  background: #007aff;
+  padding: 20px;
+  background: #0a84ff;
   color: #fff;
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
   font-size: 17px;
   font-weight: 700;
+  letter-spacing: -0.3px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 .btn-stop {
   width: 100%;
-  padding: 16px;
-  background: #ff3b30;
-  color: #fff;
-  border: none;
-  border-radius: 14px;
+  padding: 18px;
+  background: #2c2c2e;
+  color: #ff453a;
+  border: 1.5px solid #3a3a3c;
+  border-radius: 16px;
   font-size: 16px;
   font-weight: 700;
+  letter-spacing: -0.3px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-}
-.dbg {
-  background: #111;
-  color: #0f0;
-  font-family: monospace;
-  font-size: 11px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  word-break: break-all;
-  min-height: 28px;
+  flex-shrink: 0;
 }
 
 .scan-count {
   text-align: center;
-  color: #34c759;
+  color: #30d158;
   font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.2px;
 }
 .error {
-  background: #fff0f0;
-  color: #ff3b30;
+  background: rgba(255, 69, 58, .12);
+  color: #ff453a;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
+  border: 1px solid rgba(255, 69, 58, .25);
 }
 
 /* ── 결과 패널 ── */
 .result-panel {
   flex: 1;
+  display: flex;
   flex-direction: column;
   padding: 16px;
   gap: 12px;
@@ -137,33 +188,37 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-.result-count { font-size: 17px; font-weight: 700; color: #1c1c1e; }
+.result-count { font-size: 17px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
 .result-btns  { display: flex; gap: 8px; }
 
 .btn-share {
-  background: #007aff; color: #fff; border: none;
-  border-radius: 10px; padding: 9px 18px;
+  background: #0a84ff; color: #fff; border: none;
+  border-radius: 10px; padding: 10px 20px;
   font-size: 14px; font-weight: 600; cursor: pointer;
+  letter-spacing: -0.2px;
 }
 .btn-clear {
-  background: #e5e5ea; color: #3a3a3c; border: none;
-  border-radius: 10px; padding: 9px 14px;
+  background: #2c2c2e; color: #aeaeb2; border: 1px solid #3a3a3c;
+  border-radius: 10px; padding: 10px 16px;
   font-size: 14px; font-weight: 600; cursor: pointer;
+  letter-spacing: -0.2px;
 }
+
 .empty {
   text-align: center;
-  color: #aeaeb2;
+  color: #48484a;
   font-size: 15px;
   margin-top: 80px;
+  font-weight: 500;
 }
 
 /* ── 테이블 ── */
 .table-wrap {
   flex: 1;
   overflow: auto;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
+  background: #2c2c2e;
+  border-radius: 14px;
+  border: 1px solid #3a3a3c;
   -webkit-overflow-scrolling: touch;
 }
 table {
@@ -174,30 +229,33 @@ table {
 thead {
   position: sticky;
   top: 0;
-  background: #f2f2f7;
+  background: #1c1c1e;
   z-index: 1;
 }
 th {
   padding: 10px 12px;
   text-align: left;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  color: #6e6e73;
-  border-bottom: 1px solid #e0e0e0;
+  color: #636366;
+  border-bottom: 1px solid #3a3a3c;
   white-space: nowrap;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 td {
-  padding: 11px 12px;
-  color: #1c1c1e;
-  border-bottom: 1px solid #f2f2f7;
+  padding: 12px 12px;
+  color: #e5e5ea;
+  border-bottom: 1px solid #3a3a3c;
   word-break: break-all;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 tr:last-child td { border-bottom: none; }
 .td-num {
   width: 28px;
   text-align: center;
-  color: #c7c7cc;
+  color: #48484a;
   font-size: 11px;
   font-weight: 700;
 }
