@@ -190,8 +190,6 @@ export default function App() {
           ? <button className="btn-stop"  onClick={stopScan}>■ 스캔 종료</button>
           : <button className="btn-start" onClick={startScan}>📷 스캔 시작</button>}
 
-        <div className="dbg" ref={logRef}>대기중</div>
-
         {error && <p className="error">{error}</p>}
         {items.length > 0 && <p className="scan-count">✓ {items.length}개 인식됨</p>}
       </div>
