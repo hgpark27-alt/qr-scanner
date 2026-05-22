@@ -6,24 +6,14 @@ import './App.css'
 setZXingModuleOverrides({ locateFile: (p) => p.endsWith('.wasm') ? wasmUrl : p })
 
 function parseLabel(raw) {
-  let pn = '', sn = '', so = ''
-
-  // ① GS(0x1D) 분리 — ANSI MH10.8.2 표준 필드 구분자
-  for (const field of raw.split('\x1d')) {
-    const f = field.replace(/[\x00-\x1f]/g, '')  // 모든 컨트롤 문자 제거
-    if (f.startsWith('1T') && !so) so = f.slice(2)
-    else if (/^P\d/.test(f) && !pn)  pn = f.slice(1)
-    else if (/^S\d/.test(f) && !sn)  sn = f.slice(1)
-  }
-
-  // ② 못 찾은 항목은 연결 문자열에서 정규식으로 추출 (GS 없는 포맷 대응)
-  if (!pn || !sn || !so) {
-    const s = raw.replace(/[\x00-\x1f]/g, '')
-    if (!pn) { const m = s.match(/P(\d[\d\-A-Za-z]+?)(?=S\d|1T)/);               if (m) pn = m[1] }
-    if (!sn) { const m = s.match(/P\d[\d\-A-Za-z]+?S(\d[\d\-A-Za-z]+?)(?=1T)/); if (m) sn = m[1] }
-    if (!so) { const m = s.match(/1T(.+?)(?=\d[A-Z]|$)/);                         if (m) so = m[1] }
-  }
-
+  const s = raw.replace(/[\x00-\x1f]/g, '')
+  const pIdx  = s.indexOf('P')
+  const sIdx  = s.indexOf('S',  pIdx + 1)
+  const tIdx  = s.indexOf('1T', sIdx + 1)
+  const lIdx  = s.indexOf('4LK', tIdx + 1)
+  const pn = pIdx >= 0 && sIdx  > pIdx  ? s.slice(pIdx  + 1, sIdx)      : ''
+  const sn = sIdx >= 0 && tIdx  > sIdx  ? s.slice(sIdx  + 1, tIdx)      : ''
+  const so = tIdx >= 0 && lIdx  > tIdx  ? s.slice(tIdx  + 2, lIdx)      : ''
   return { pn, sn, so }
 }
 
