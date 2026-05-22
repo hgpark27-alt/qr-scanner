@@ -18,7 +18,6 @@ export default function App() {
   const [tab, setTab]           = useState('scan')
   const [items, setItems]       = useState([])
   const [error, setError]       = useState(null)
-  const [dbg, setDbg]           = useState('대기중')   // ← 디버그 라인
   const videoRef  = useRef(null)
   const canvasRef = useRef(null)
   const seenRef   = useRef(new Set())
@@ -36,19 +35,19 @@ export default function App() {
     if (!video || !canvas) return
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    let stream     = null
-    let intervalId = null
-    let active     = true
+    let stream   = null
+    let animId   = null
+    let active   = true
+    let busy     = false   // 동시 스캔 방지
 
     const handleCode = (text) => {
-      setDbg('RAW: ' + text.slice(0, 60))
       if (!active || seenRef.current.has(text)) return
       seenRef.current.add(text)
       setItems(prev => [parseLabel(text), ...prev])
     }
 
     ;(async () => {
-      // ① 카메라 먼저 시작 — getUserMedia 는 가능한 한 빨리 호출
+      // ① 카메라 시작
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1920 } }
@@ -63,71 +62,55 @@ export default function App() {
 
       video.srcObject = stream
       video.play().catch(() => {})
-      setDbg('카메라 시작됨')
 
-      // ② BarcodeDetector 초기화 (카메라 시작 후에 해도 됨)
+      // ② BarcodeDetector 초기화
       let detector = null
       if ('BarcodeDetector' in window) {
         try {
-          // 지원 포맷 확인 후 사용 가능한 것만 추가
-          const supported  = await window.BarcodeDetector.getSupportedFormats().catch(() => [])
-          const wantFormats = ['qr_code', 'data_matrix']
-          const useFormats  = supported.length
-            ? wantFormats.filter(f => supported.includes(f))
-            : wantFormats
-          detector = new window.BarcodeDetector({ formats: useFormats.length ? useFormats : ['qr_code'] })
+          const supported = await window.BarcodeDetector.getSupportedFormats().catch(() => [])
+          const want = ['qr_code', 'data_matrix']
+          const use  = supported.length ? want.filter(f => supported.includes(f)) : want
+          detector   = new window.BarcodeDetector({ formats: use.length ? use : ['qr_code'] })
         } catch {}
       }
 
-      const engine = detector ? 'BarcodeDetector' : 'jsQR'
-      setDbg(`엔진:${engine} | 스캔중...`)
-
       if (!active) return
 
-      let tickCount = 0
-
-      // ③ 스캔 루프
+      // ③ 60fps 스캔 루프 — busy 락으로 중복 방지
       const scan = async () => {
         if (!active) return
-        tickCount++
 
-        const rs = video.readyState
-        const vw = video.videoWidth
-
-        if (rs < 2 || !vw) {
-          setDbg(`엔진:${engine} | tick:${tickCount} | readyState:${rs} | 대기`)
-          return
+        if (!busy && video.readyState >= 2 && video.videoWidth > 0) {
+          busy = true
+          try {
+            if (detector) {
+              // 네이티브: video 직접 전달, 빠름
+              const codes = await detector.detect(video)
+              codes.forEach(c => handleCode(c.rawValue))
+            } else {
+              // jsQR: 400px 로 축소 (속도 우선)
+              const W = 400
+              const H = Math.round(video.videoHeight * W / video.videoWidth)
+              canvas.width  = W
+              canvas.height = H
+              ctx.drawImage(video, 0, 0, W, H)
+              const img  = ctx.getImageData(0, 0, W, H)
+              const code = jsQR(img.data, W, H, { inversionAttempts: 'attemptBoth' })
+              if (code) handleCode(code.data)
+            }
+          } catch {}
+          busy = false
         }
 
-        setDbg(`엔진:${engine} | tick:${tickCount} | ${vw}px | 스캔중`)
-
-        try {
-          if (detector) {
-            const codes = await detector.detect(video)
-            if (codes.length === 0) setDbg(`엔진:${engine} | tick:${tickCount} | 코드없음`)
-            codes.forEach(c => handleCode(c.rawValue))
-          } else {
-            const W = Math.min(video.videoWidth, 960)
-            const H = Math.round(video.videoHeight * W / video.videoWidth)
-            canvas.width  = W
-            canvas.height = H
-            ctx.drawImage(video, 0, 0, W, H)
-            const img  = ctx.getImageData(0, 0, W, H)
-            const code = jsQR(img.data, W, H, { inversionAttempts: 'attemptBoth' })
-            if (!code) setDbg(`jsQR | tick:${tickCount} | 코드없음`)
-            if (code) handleCode(code.data)
-          }
-        } catch (e) {
-          setDbg(`에러: ${e.message}`)
-        }
+        animId = requestAnimationFrame(scan)
       }
 
-      intervalId = setInterval(scan, 150)
+      animId = requestAnimationFrame(scan)
     })()
 
     return () => {
       active = false
-      clearInterval(intervalId)
+      cancelAnimationFrame(animId)
       stream?.getTracks().forEach(t => t.stop())
       video.srcObject = null
     }
@@ -156,15 +139,14 @@ export default function App() {
         </button>
       </div>
 
-      {/* 스캔 패널 — 항상 DOM 유지 */}
+      {/* 스캔 패널 */}
       <div className="scan-panel" style={{ display: tab === 'scan' ? 'flex' : 'none' }}>
         <div className="camera-wrap">
           <video ref={videoRef} playsInline muted
             style={{ display: scanning ? 'block' : 'none',
                      position: 'absolute', inset: 0,
                      width: '100%', height: '100%', objectFit: 'cover' }} />
-          {!scanning &&
-            <div className="cam-idle">📷</div>}
+          {!scanning && <div className="cam-idle">📷</div>}
         </div>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 
@@ -172,16 +154,11 @@ export default function App() {
           ? <button className="btn-stop"  onClick={stopScan}>■ 스캔 종료</button>
           : <button className="btn-start" onClick={startScan}>📷 스캔 시작</button>}
 
-        {/* 디버그 패널 — 원인 파악 후 제거 */}
-        <div style={{ background:'#111', color:'#0f0', fontFamily:'monospace',
-                      fontSize:11, padding:'8px 10px', borderRadius:8, wordBreak:'break-all' }}>
-          {dbg}
-        </div>
         {error && <p className="error">{error}</p>}
         {items.length > 0 && <p className="scan-count">✓ {items.length}개 인식됨</p>}
       </div>
 
-      {/* 결과 패널 — 항상 DOM 유지 */}
+      {/* 결과 패널 */}
       <div className="result-panel" style={{ display: tab === 'result' ? 'flex' : 'none' }}>
         {items.length === 0
           ? <p className="empty">스캔된 항목이 없습니다</p>
