@@ -23,7 +23,6 @@ body {
   top: 0;
   z-index: 10;
 }
-
 .tab {
   flex: 1;
   padding: 14px;
@@ -39,9 +38,7 @@ body {
   justify-content: center;
   gap: 6px;
 }
-
 .tab.active { color: #2563eb; border-bottom-color: #2563eb; }
-
 .badge {
   background: #2563eb;
   color: white;
@@ -59,35 +56,30 @@ body {
   flex: 1;
 }
 
+/* 카메라 컨테이너 — 1:1 정사각형, video가 여기 absolute로 채움 */
 .camera-wrap {
   width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 12px;
   overflow: hidden;
-  background: #1a1a1a;
+  background: #111;
+  position: relative;   /* video absolute 기준점 */
 }
 
-/* html5-qrcode 내부 요소 전체 덮어쓰기 */
+/* 스캔 전 회색 플레이스홀더 */
+.camera-placeholder {
+  position: absolute;
+  inset: 0;
+  background: #e5e7eb;
+}
+
+/* #reader 는 camera-wrap 안을 꽉 채움 */
 #reader {
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-  padding: 0 !important;
+  position: absolute;
+  inset: 0;
 }
-#reader * { box-sizing: border-box; }
-#reader__scan_region {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: unset !important;
-}
-#reader__scan_region video {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-}
-#reader__scan_region img { display: none !important; }
-#reader__dashboard { display: none !important; }
 
+/* 버튼 */
 .btn-primary {
   background: #2563eb;
   color: white;
@@ -98,7 +90,6 @@ body {
   cursor: pointer;
   width: 100%;
 }
-
 .btn-cancel {
   background: #ef4444;
   color: white;
@@ -110,12 +101,7 @@ body {
   width: 100%;
 }
 
-.scan-count {
-  text-align: center;
-  font-size: 13px;
-  color: #6b7280;
-}
-
+.scan-count { text-align: center; font-size: 13px; color: #6b7280; }
 .error {
   color: #ef4444;
   font-size: 13px;
@@ -131,50 +117,26 @@ body {
   gap: 10px;
   flex: 1;
 }
-
-.result-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
+.result-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .btn-share {
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 14px;
-  cursor: pointer;
+  background: #2563eb; color: white; border: none;
+  border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer;
 }
-
 .btn-clear {
-  background: #e5e7eb;
-  color: #374151;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 14px;
-  cursor: pointer;
+  background: #e5e7eb; color: #374151; border: none;
+  border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer;
 }
+.empty { text-align: center; color: #9ca3af; font-size: 14px; margin-top: 40px; }
 
-.empty {
-  text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
-  margin-top: 40px;
-}
-
+/* 테이블 */
 .table-wrap {
   overflow-x: auto;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   background: white;
 }
-
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead { background: #f9fafb; }
-
 th {
   padding: 10px;
   text-align: left;
@@ -184,13 +146,11 @@ th {
   border-bottom: 1px solid #e5e7eb;
   white-space: nowrap;
 }
-
 td {
   padding: 10px;
   color: #111;
   border-bottom: 1px solid #f3f4f6;
   word-break: break-all;
 }
-
 tr:last-child td { border-bottom: none; }
 td.num { color: #9ca3af; font-size: 11px; width: 24px; }
