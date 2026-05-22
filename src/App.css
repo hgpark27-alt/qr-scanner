@@ -4,7 +4,7 @@ html, body { height: 100%; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #0a0a0b;
+  background: #f5f5f7;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -17,7 +17,7 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #0a0a0b;
+  background: #f5f5f7;
 }
 
 /* ── 인식 점멸 오버레이 ── */
@@ -40,8 +40,8 @@ body {
 /* ── 탭 바 ── */
 .tab-bar {
   display: flex;
-  background: #0a0a0b;
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: #fff;
+  border-bottom: 1px solid #e4e4e7;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -56,7 +56,7 @@ body {
   border-bottom: 2px solid transparent;
   font-size: 14px;
   font-weight: 500;
-  color: #52525b;
+  color: #a1a1aa;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -66,17 +66,16 @@ body {
   transition: color .12s;
 }
 .tab.active {
-  color: #fafafa;
-  border-bottom-color: #fafafa;
+  color: #18181b;
+  border-bottom-color: #18181b;
 }
 .badge {
-  background: #fafafa;
-  color: #0a0a0b;
+  background: #18181b;
+  color: #fff;
   font-size: 10px;
   font-weight: 700;
   border-radius: 99px;
   padding: 1px 6px;
-  letter-spacing: 0;
 }
 
 /* ── 스캔 패널 ── */
@@ -97,7 +96,7 @@ body {
   background: #000;
   position: relative;
   flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
 }
 
 /* 대기 상태 */
@@ -109,11 +108,12 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  background: #18181b;
 }
 .cam-idle-icon {
   width: 48px;
   height: 48px;
-  border: 1.5px solid rgba(255,255,255,.12);
+  border: 1.5px solid rgba(255,255,255,.15);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -121,9 +121,8 @@ body {
 }
 .cam-idle-text {
   font-size: 13px;
-  color: #3f3f46;
+  color: #52525b;
   font-weight: 500;
-  letter-spacing: -0.1px;
 }
 
 /* 스캔 가이드 — 4 모서리 */
@@ -142,8 +141,8 @@ body {
 .btn-start {
   width: 100%;
   padding: 18px;
-  background: #fafafa;
-  color: #09090b;
+  background: #18181b;
+  color: #fff;
   border: none;
   border-radius: 12px;
   font-size: 16px;
@@ -154,7 +153,7 @@ body {
   flex-shrink: 0;
   transition: opacity .1s;
 }
-.btn-start:active { opacity: .85; }
+.btn-start:active { opacity: .8; }
 
 .btn-stop {
   width: 100%;
@@ -175,18 +174,17 @@ body {
 
 .scan-count {
   text-align: center;
-  color: #22c55e;
+  color: #16a34a;
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: -0.1px;
 }
 .error {
-  background: rgba(239,68,68,.1);
-  color: #f87171;
+  background: #fef2f2;
+  color: #dc2626;
   padding: 11px 13px;
   border-radius: 10px;
   font-size: 13px;
-  border: 1px solid rgba(239,68,68,.2);
+  border: 1px solid #fecaca;
 }
 
 /* ── 결과 패널 ── */
@@ -205,42 +203,38 @@ body {
 .result-count {
   font-size: 15px;
   font-weight: 600;
-  color: #fafafa;
+  color: #18181b;
   letter-spacing: -0.2px;
 }
 .result-btns { display: flex; gap: 6px; }
 
 .btn-share {
-  background: #fafafa;
-  color: #09090b;
+  background: #18181b;
+  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 9px 18px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  letter-spacing: -0.1px;
   transition: opacity .1s;
 }
 .btn-share:active { opacity: .8; }
 
 .btn-clear {
-  background: transparent;
-  color: #52525b;
-  border: 1px solid rgba(255,255,255,.1);
+  background: #fff;
+  color: #71717a;
+  border: 1px solid #e4e4e7;
   border-radius: 8px;
   padding: 9px 14px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  letter-spacing: -0.1px;
-  transition: color .1s;
 }
-.btn-clear:active { color: #a1a1aa; }
 
 .empty {
   text-align: center;
-  color: #27272a;
+  color: #d4d4d8;
   font-size: 14px;
   margin-top: 80px;
   font-weight: 500;
@@ -250,10 +244,11 @@ body {
 .table-wrap {
   flex: 1;
   overflow: auto;
-  background: #111113;
+  background: #fff;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.07);
+  border: 1px solid #e4e4e7;
   -webkit-overflow-scrolling: touch;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
 table {
   width: 100%;
@@ -262,7 +257,7 @@ table {
 thead {
   position: sticky;
   top: 0;
-  background: #0f0f11;
+  background: #fafafa;
   z-index: 1;
 }
 th {
@@ -270,16 +265,16 @@ th {
   text-align: left;
   font-size: 10px;
   font-weight: 600;
-  color: #3f3f46;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  color: #a1a1aa;
+  border-bottom: 1px solid #e4e4e7;
   white-space: nowrap;
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
 td {
   padding: 11px 12px;
-  color: #d4d4d8;
-  border-bottom: 1px solid rgba(255,255,255,.05);
+  color: #18181b;
+  border-bottom: 1px solid #f4f4f5;
   word-break: break-all;
   font-size: 12.5px;
   font-family: 'SF Mono', ui-monospace, monospace;
@@ -289,7 +284,7 @@ tr:last-child td { border-bottom: none; }
 .td-num {
   width: 28px;
   text-align: center;
-  color: #27272a;
+  color: #d4d4d8;
   font-size: 10px;
   font-weight: 600;
   font-family: inherit;
