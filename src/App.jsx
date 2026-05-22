@@ -194,6 +194,7 @@ export default function App() {
   return (
     <div className="app">
       <div ref={flashRef} className="scan-flash" />
+      <div className="watermark">한솔아이원스 박혜근 선임</div>
 
       <div className="tab-bar">
         <button className={`tab ${tab === 'scan' ? 'active' : ''}`}

@@ -37,6 +37,18 @@ body {
   100% { background: #ef4444; opacity: 0; }
 }
 
+/* ── 워터마크 ── */
+.watermark {
+  position: fixed;
+  bottom: 10px;
+  right: 12px;
+  font-size: 10px;
+  color: #c4c4c7;
+  pointer-events: none;
+  letter-spacing: -0.1px;
+  z-index: 10;
+}
+
 /* ── 탭 바 ── */
 .tab-bar {
   display: flex;
