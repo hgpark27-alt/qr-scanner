@@ -76,10 +76,22 @@ h1 { font-size: 20px; color: #111; }
   align-items: center;
 }
 
-#reader { width: 100% !important; border-radius: 10px; overflow: hidden; }
-#reader video { width: 100% !important; height: auto !important; }
+#reader {
+  width: 100% !important;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+#reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  position: absolute;
+  top: 0; left: 0;
+}
 #reader img { display: none; }
-/* html5-qrcode 기본 UI 숨김 */
 #reader__dashboard_section_swaplink,
 #reader__dashboard_section_csr span,
 #reader__camera_selection { display: none !important; }
