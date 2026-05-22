@@ -21,10 +21,13 @@ export default function App() {
   const [tab, setTab]           = useState('scan')
   const [items, setItems]       = useState([])
   const [error, setError]       = useState(null)
-  const [log, setLog]           = useState('대기중')
   const videoRef  = useRef(null)
   const canvasRef = useRef(null)
+  const logRef    = useRef(null)
   const seenRef   = useRef(new Set())
+
+  // DOM 직접 업데이트 — React 리렌더 없음
+  const dbgLog = (msg) => { if (logRef.current) logRef.current.textContent = msg }
 
   const startScan      = () => { setError(null); setScanning(true) }
   const stopScan       = () => setScanning(false)
@@ -43,23 +46,38 @@ export default function App() {
     let animId = null
     let active = true
     let busy   = false
+    let tick   = 0
 
     const handleCode = (text) => {
-      setLog('인식: ' + text.slice(0, 50))
+      dbgLog('인식: ' + text.slice(0, 60))
       if (!active || seenRef.current.has(text)) return
       seenRef.current.add(text)
       setItems(prev => [parseLabel(text), ...prev])
     }
 
+    // 지정 너비로 캔버스에 그린 뒤 ImageData 반환 (캔버스 재할당 최소화)
+    const capture = (targetW) => {
+      const vW = video.videoWidth
+      const vH = video.videoHeight
+      const w  = Math.min(vW, targetW)
+      const h  = Math.round(vH * w / vW)
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width  = w
+        canvas.height = h
+      }
+      ctx.drawImage(video, 0, 0, w, h)
+      return { data: ctx.getImageData(0, 0, w, h), w, h }
+    }
+
     ;(async () => {
-      // ① 카메라 시작
       try {
+        // 카메라 최대 해상도 요청 — 멀리서도 QR이 충분한 픽셀 수를 갖도록
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1920 } }
+          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
         })
       } catch (e) {
         if (!active) return
-        setLog('카메라오류: ' + e.message)
+        dbgLog('카메라오류: ' + e.message)
         setError('카메라 권한을 허용해주세요.')
         setScanning(false)
         return
@@ -68,51 +86,55 @@ export default function App() {
 
       video.srcObject = stream
       video.play().catch(() => {})
-      setLog('카메라 시작됨 — zxing-wasm 로드중...')
+      dbgLog('카메라 시작됨 — zxing-wasm 로드중...')
 
-      // ② zxing-wasm 워밍업 (첫 호출 시 WASM 로드)
-      try {
-        const dummy = new ImageData(1, 1)
-        await readBarcodesFromImageData(dummy, { formats: ['QRCode'] })
-      } catch {}
+      try { await readBarcodesFromImageData(new ImageData(1, 1), { formats: ['QRCode'] }) } catch {}
 
-      setLog('준비완료 — 스캔중...')
+      dbgLog('준비완료 — 스캔중...')
       if (!active) return
 
-      let tick = 0
-
-      // ③ 60fps 스캔
       const scan = async () => {
         if (!active) return
 
         if (!busy && video.readyState >= 2 && video.videoWidth > 0) {
           busy = true
           tick++
-          try {
-            // 800px 로 스케일 (각도·왜곡 커버 위해 jsQR보다 높게)
-            const W = Math.min(video.videoWidth, 800)
-            const H = Math.round(video.videoHeight * W / video.videoWidth)
-            canvas.width  = W
-            canvas.height = H
-            ctx.drawImage(video, 0, 0, W, H)
-            const imageData = ctx.getImageData(0, 0, W, H)
 
-            const results = await readBarcodesFromImageData(imageData, {
-              formats:            ['QRCode', 'DataMatrix'],
-              tryHarder:          true,   // 더 많은 패턴 시도
-              tryRotate:          true,   // 각도 보정
-              tryInvert:          true,   // 반전 시도
-              tryDownscale:       true,   // 내부 다운스케일
+          try {
+            const vW = video.videoWidth
+
+            // ① 빠른 패스: 800px (원거리 QR 고려해 넉넉히), 최소 옵션
+            //    → 매 프레임, busy 락으로 겹치지 않음 (병목 없음)
+            const { data: fastData, w: fastW } = capture(800)
+            let results = await readBarcodesFromImageData(fastData, {
+              formats: ['QRCode', 'DataMatrix'],
+              tryHarder:    false,
+              tryRotate:    true,
+              tryInvert:    false,
+              tryDownscale: false,
               maxNumberOfSymbols: 1,
             })
 
-            if (results.length === 0) {
-              setLog(`tick:${tick} | 코드없음`)
-            } else {
-              results.forEach(r => handleCode(r.text))
+            // ② 정밀 패스: 카메라 원본 해상도 (축소 없음) + 전체 옵션
+            //    → 3프레임마다 한 번, 빠른 패스 실패 시만
+            if (results.length === 0 && tick % 3 === 0) {
+              const { data: fullData } = capture(vW)   // 원본 해상도 그대로
+              results = await readBarcodesFromImageData(fullData, {
+                formats: ['QRCode', 'DataMatrix'],
+                tryHarder:    true,
+                tryRotate:    true,
+                tryInvert:    true,
+                tryDownscale: true,
+                maxNumberOfSymbols: 1,
+              })
+              dbgLog(`tick:${tick} | 정밀:${vW}px | ${results.length > 0 ? '인식!' : '없음'}`)
+            } else if (results.length === 0) {
+              dbgLog(`tick:${tick} | 빠른:${fastW}px | 없음`)
             }
+
+            results.forEach(r => handleCode(r.text))
           } catch (e) {
-            setLog('스캔에러: ' + e.message)
+            dbgLog('에러: ' + e.message)
           }
           busy = false
         }
@@ -168,8 +190,7 @@ export default function App() {
           ? <button className="btn-stop"  onClick={stopScan}>■ 스캔 종료</button>
           : <button className="btn-start" onClick={startScan}>📷 스캔 시작</button>}
 
-        {/* 로그 */}
-        <div className="dbg">{log}</div>
+        <div className="dbg" ref={logRef}>대기중</div>
 
         {error && <p className="error">{error}</p>}
         {items.length > 0 && <p className="scan-count">✓ {items.length}개 인식됨</p>}
