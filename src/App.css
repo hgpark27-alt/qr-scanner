@@ -1,156 +1,192 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body { height: 100%; }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f0f0f0;
-  min-height: 100vh;
+  background: #f2f2f7;
+  -webkit-font-smoothing: antialiased;
 }
+
+#root { height: 100%; }
 
 .app {
+  width: 100%;
   max-width: 480px;
   margin: 0 auto;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  background: #f2f2f7;
 }
 
-/* 탭 헤더 */
+/* ── 탭 헤더 ── */
 .tab-bar {
   display: flex;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  border-bottom: 1px solid #c6c6c8;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
+  flex-shrink: 0;
 }
 .tab {
   flex: 1;
-  padding: 14px;
-  font-size: 15px;
-  font-weight: 500;
-  border: none;
+  padding: 14px 8px;
   background: none;
-  color: #9ca3af;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #8e8e93;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  transition: color .15s;
 }
-.tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+.tab.active { color: #007aff; border-bottom-color: #007aff; }
 .badge {
-  background: #2563eb;
-  color: white;
+  background: #007aff;
+  color: #fff;
   font-size: 11px;
-  border-radius: 999px;
-  padding: 1px 7px;
-  font-weight: 600;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 2px 7px;
+  margin-left: 2px;
 }
 
-/* 스캔 패널 */
+/* ── 스캔 패널 ── */
 .scan-panel {
-  padding: 14px;
-  flex-direction: column;
-  gap: 12px;
   flex: 1;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
 }
 
-/* 카메라 컨테이너 — 1:1 정사각형, video가 여기 absolute로 채움 */
+/* 카메라 박스 — 정사각형, video 가 꽉 채움 */
 .camera-wrap {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 12px;
+  border-radius: 18px;
   overflow: hidden;
-  background: #111;
-  position: relative;   /* video absolute 기준점 */
+  background: #000;
+  position: relative;   /* 자식 absolute 기준 */
+  flex-shrink: 0;
 }
 
-/* 스캔 전 회색 플레이스홀더 */
-.camera-placeholder {
-  position: absolute;
-  inset: 0;
-  background: #e5e7eb;
-}
-
-/* #reader 는 camera-wrap 안을 꽉 채움 */
-#reader {
-  position: absolute;
-  inset: 0;
-}
-
-/* 버튼 */
-.btn-primary {
-  background: #2563eb;
-  color: white;
+.btn-start {
+  width: 100%;
+  padding: 18px;
+  background: #007aff;
+  color: #fff;
   border: none;
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
   font-size: 17px;
+  font-weight: 700;
   cursor: pointer;
-  width: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
-.btn-cancel {
-  background: #ef4444;
-  color: white;
+.btn-stop {
+  width: 100%;
+  padding: 16px;
+  background: #ff3b30;
+  color: #fff;
   border: none;
-  border-radius: 12px;
-  padding: 13px;
-  font-size: 15px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  width: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
-
-.scan-count { text-align: center; font-size: 13px; color: #6b7280; }
+.scan-count {
+  text-align: center;
+  color: #34c759;
+  font-size: 14px;
+  font-weight: 600;
+}
 .error {
-  color: #ef4444;
+  background: #fff0f0;
+  color: #ff3b30;
+  padding: 12px 14px;
+  border-radius: 10px;
   font-size: 13px;
-  background: #fef2f2;
-  padding: 10px 14px;
-  border-radius: 8px;
 }
 
-/* 결과 패널 */
+/* ── 결과 패널 ── */
 .result-panel {
-  padding: 12px;
-  flex-direction: column;
-  gap: 10px;
   flex: 1;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
 }
-.result-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.result-count { font-size: 17px; font-weight: 700; color: #1c1c1e; }
+.result-btns  { display: flex; gap: 8px; }
+
 .btn-share {
-  background: #2563eb; color: white; border: none;
-  border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer;
+  background: #007aff; color: #fff; border: none;
+  border-radius: 10px; padding: 9px 18px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
 }
 .btn-clear {
-  background: #e5e7eb; color: #374151; border: none;
-  border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer;
+  background: #e5e5ea; color: #3a3a3c; border: none;
+  border-radius: 10px; padding: 9px 14px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
 }
-.empty { text-align: center; color: #9ca3af; font-size: 14px; margin-top: 40px; }
+.empty {
+  text-align: center;
+  color: #aeaeb2;
+  font-size: 15px;
+  margin-top: 80px;
+}
 
-/* 테이블 */
+/* ── 테이블 ── */
 .table-wrap {
-  overflow-x: auto;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: white;
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  -webkit-overflow-scrolling: touch;
 }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead { background: #f9fafb; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+thead {
+  position: sticky;
+  top: 0;
+  background: #f2f2f7;
+  z-index: 1;
+}
 th {
-  padding: 10px;
+  padding: 10px 12px;
   text-align: left;
   font-size: 11px;
-  color: #6b7280;
-  font-weight: 600;
-  border-bottom: 1px solid #e5e7eb;
+  font-weight: 700;
+  color: #6e6e73;
+  border-bottom: 1px solid #e0e0e0;
   white-space: nowrap;
 }
 td {
-  padding: 10px;
-  color: #111;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 11px 12px;
+  color: #1c1c1e;
+  border-bottom: 1px solid #f2f2f7;
   word-break: break-all;
+  font-size: 13px;
 }
 tr:last-child td { border-bottom: none; }
-td.num { color: #9ca3af; font-size: 11px; width: 24px; }
+.td-num {
+  width: 28px;
+  text-align: center;
+  color: #c7c7cc;
+  font-size: 11px;
+  font-weight: 700;
+}
