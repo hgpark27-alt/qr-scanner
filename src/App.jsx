@@ -6,7 +6,7 @@ import './App.css'
 setZXingModuleOverrides({ locateFile: (p) => p.endsWith('.wasm') ? wasmUrl : p })
 
 function parseLabel(raw) {
-  const s = raw.replace(/[\x00-\x1f]/g, '')
+  const s = raw.replace(/[\x00-\x1f␀-␟]/g, '')
   const pIdx  = s.indexOf('P')
   const sIdx  = s.indexOf('S',  pIdx + 1)
   const tIdx  = s.indexOf('1T', sIdx + 1)
