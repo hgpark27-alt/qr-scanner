@@ -22,12 +22,15 @@ export default function App() {
   useEffect(() => {
     if (!scanning) return
 
+    const width = window.innerWidth
+    const boxSize = Math.min(width - 40, 300)
+
     const scanner = new Html5Qrcode('reader')
     scannerRef.current = scanner
 
     scanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
+      { fps: 15, qrbox: { width: boxSize, height: boxSize } },
       (text) => {
         scanner.stop().then(() => {
           setScanning(false)
@@ -69,6 +72,7 @@ export default function App() {
 
       {scanning && (
         <div className="scanner-wrap">
+          <p className="scan-hint">QR 코드를 네모 안에 맞춰주세요</p>
           <div id="reader" />
           <button className="btn-cancel" onClick={stopScan}>취소</button>
         </div>
@@ -78,6 +82,7 @@ export default function App() {
 
       {result && (
         <div className="result-wrap">
+          <p className="result-label">인식 결과</p>
           <div className="result-box">
             {formatResult(result).map((line, i) => (
               <p key={i}>{line}</p>
