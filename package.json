@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "jsqr": "^1.4.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "zxing-wasm": "^3.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

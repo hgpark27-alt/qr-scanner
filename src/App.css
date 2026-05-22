@@ -100,6 +100,17 @@ body {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+.dbg {
+  background: #111;
+  color: #0f0;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  word-break: break-all;
+  min-height: 28px;
+}
+
 .scan-count {
   text-align: center;
   color: #34c759;

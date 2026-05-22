@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import jsQR from 'jsqr'
+import { readBarcodesFromImageData, setZXingModuleOverrides } from 'zxing-wasm/reader'
+import wasmUrl from 'zxing-wasm/reader/zxing_reader.wasm?url'
 import './App.css'
+
+setZXingModuleOverrides({ locateFile: (p) => p.endsWith('.wasm') ? wasmUrl : p })
 
 function parseLabel(raw) {
   const s = raw.replace(/[\x00-\x1f]/g, '')
@@ -18,6 +21,7 @@ export default function App() {
   const [tab, setTab]           = useState('scan')
   const [items, setItems]       = useState([])
   const [error, setError]       = useState(null)
+  const [log, setLog]           = useState('대기중')
   const videoRef  = useRef(null)
   const canvasRef = useRef(null)
   const seenRef   = useRef(new Set())
@@ -34,13 +38,14 @@ export default function App() {
     const canvas = canvasRef.current
     if (!video || !canvas) return
 
-    const ctx = canvas.getContext('2d', { willReadFrequently: true })
-    let stream   = null
-    let animId   = null
-    let active   = true
-    let busy     = false   // 동시 스캔 방지
+    const ctx  = canvas.getContext('2d', { willReadFrequently: true })
+    let stream = null
+    let animId = null
+    let active = true
+    let busy   = false
 
     const handleCode = (text) => {
+      setLog('인식: ' + text.slice(0, 50))
       if (!active || seenRef.current.has(text)) return
       seenRef.current.add(text)
       setItems(prev => [parseLabel(text), ...prev])
@@ -52,8 +57,9 @@ export default function App() {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1920 } }
         })
-      } catch {
+      } catch (e) {
         if (!active) return
+        setLog('카메라오류: ' + e.message)
         setError('카메라 권한을 허용해주세요.')
         setScanning(false)
         return
@@ -62,43 +68,52 @@ export default function App() {
 
       video.srcObject = stream
       video.play().catch(() => {})
+      setLog('카메라 시작됨 — zxing-wasm 로드중...')
 
-      // ② BarcodeDetector 초기화
-      let detector = null
-      if ('BarcodeDetector' in window) {
-        try {
-          const supported = await window.BarcodeDetector.getSupportedFormats().catch(() => [])
-          const want = ['qr_code', 'data_matrix']
-          const use  = supported.length ? want.filter(f => supported.includes(f)) : want
-          detector   = new window.BarcodeDetector({ formats: use.length ? use : ['qr_code'] })
-        } catch {}
-      }
+      // ② zxing-wasm 워밍업 (첫 호출 시 WASM 로드)
+      try {
+        const dummy = new ImageData(1, 1)
+        await readBarcodesFromImageData(dummy, { formats: ['QRCode'] })
+      } catch {}
 
+      setLog('준비완료 — 스캔중...')
       if (!active) return
 
-      // ③ 60fps 스캔 루프 — busy 락으로 중복 방지
+      let tick = 0
+
+      // ③ 60fps 스캔
       const scan = async () => {
         if (!active) return
 
         if (!busy && video.readyState >= 2 && video.videoWidth > 0) {
           busy = true
+          tick++
           try {
-            if (detector) {
-              // 네이티브: video 직접 전달, 빠름
-              const codes = await detector.detect(video)
-              codes.forEach(c => handleCode(c.rawValue))
+            // 800px 로 스케일 (각도·왜곡 커버 위해 jsQR보다 높게)
+            const W = Math.min(video.videoWidth, 800)
+            const H = Math.round(video.videoHeight * W / video.videoWidth)
+            canvas.width  = W
+            canvas.height = H
+            ctx.drawImage(video, 0, 0, W, H)
+            const imageData = ctx.getImageData(0, 0, W, H)
+
+            const results = await readBarcodesFromImageData(imageData, {
+              formats:            ['QRCode', 'DataMatrix'],
+              tryHarder:          true,   // 더 많은 패턴 시도
+              tryRotate:          true,   // 각도 보정
+              tryInvert:          true,   // 반전 시도
+              tryDownscale:       true,   // 내부 다운스케일
+              maxNumberOfSymbols: 1,
+            })
+
+            if (results.length === 0) {
+              setLog(`tick:${tick} | 코드없음`)
             } else {
-              // jsQR: 400px 로 축소 (속도 우선)
-              const W = 400
-              const H = Math.round(video.videoHeight * W / video.videoWidth)
-              canvas.width  = W
-              canvas.height = H
-              ctx.drawImage(video, 0, 0, W, H)
-              const img  = ctx.getImageData(0, 0, W, H)
-              const code = jsQR(img.data, W, H, { inversionAttempts: 'attemptBoth' })
-              if (code) handleCode(code.data)
+              results.forEach(r => handleCode(r.text))
             }
-          } catch {}
+          } catch (e) {
+            setLog('스캔에러: ' + e.message)
+          }
           busy = false
         }
 
@@ -139,7 +154,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* 스캔 패널 */}
       <div className="scan-panel" style={{ display: tab === 'scan' ? 'flex' : 'none' }}>
         <div className="camera-wrap">
           <video ref={videoRef} playsInline muted
@@ -154,11 +168,13 @@ export default function App() {
           ? <button className="btn-stop"  onClick={stopScan}>■ 스캔 종료</button>
           : <button className="btn-start" onClick={startScan}>📷 스캔 시작</button>}
 
+        {/* 로그 */}
+        <div className="dbg">{log}</div>
+
         {error && <p className="error">{error}</p>}
         {items.length > 0 && <p className="scan-count">✓ {items.length}개 인식됨</p>}
       </div>
 
-      {/* 결과 패널 */}
       <div className="result-panel" style={{ display: tab === 'result' ? 'flex' : 'none' }}>
         {items.length === 0
           ? <p className="empty">스캔된 항목이 없습니다</p>
