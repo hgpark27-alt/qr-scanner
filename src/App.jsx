@@ -25,7 +25,33 @@ export default function App() {
   const videoRef  = useRef(null)
   const canvasRef = useRef(null)
   const logRef    = useRef(null)
+  const flashRef  = useRef(null)
   const seenRef   = useRef(new Set())
+
+  const triggerFeedback = () => {
+    // 진동 (Android)
+    navigator.vibrate?.(80)
+    // 삑 소리 (Web Audio API — iOS 포함)
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)()
+      const osc  = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = 1046  // 고음 C6
+      gain.gain.setValueAtTime(0.4, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.12)
+    } catch {}
+    // 화면 점멸
+    const el = flashRef.current
+    if (el) {
+      el.classList.remove('flash-active')
+      void el.offsetWidth  // reflow — 애니메이션 재시작
+      el.classList.add('flash-active')
+    }
+  }
 
   // DOM 직접 업데이트 — React 리렌더 없음
   const dbgLog = (msg) => { if (logRef.current) logRef.current.textContent = msg }
@@ -53,7 +79,7 @@ export default function App() {
       dbgLog('인식: ' + text.slice(0, 60))
       if (!active || seenRef.current.has(text)) return
       seenRef.current.add(text)
-      navigator.vibrate?.(80)
+      triggerFeedback()
       setItems(prev => [parseLabel(text), ...prev])
     }
 
@@ -168,6 +194,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <div ref={flashRef} className="scan-flash" />
 
       <div className="tab-bar">
         <button className={`tab ${tab === 'scan' ? 'active' : ''}`}

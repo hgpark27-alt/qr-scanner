@@ -20,6 +20,23 @@ body {
   background: #1c1c1e;
 }
 
+/* ── 인식 점멸 오버레이 ── */
+.scan-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 999;
+}
+.scan-flash.flash-active {
+  animation: scan-flash .35s ease-out forwards;
+}
+@keyframes scan-flash {
+  0%   { background: #fff; opacity: .9; }
+  35%  { background: #ff3b30; opacity: .75; }
+  100% { background: #ff3b30; opacity: 0; }
+}
+
 /* ── 탭 바 ── */
 .tab-bar {
   display: flex;
