@@ -6,13 +6,33 @@ import './App.css'
 setZXingModuleOverrides({ locateFile: (p) => p.endsWith('.wasm') ? wasmUrl : p })
 
 function parseLabel(raw) {
-  const s = raw.replace(/[\x00-\x1f]/g, '')
-  const pPos = s.indexOf('P')
-  const tPos = s.indexOf('1T')
-  const lPos = s.indexOf('L', tPos)
-  const pn = pPos >= 0 ? s.substring(pPos + 1, pPos + 11) : ''
-  const sn = (pPos >= 0 && tPos > pPos) ? s.substring(pPos + 12, tPos) : ''
-  const so = (tPos >= 0 && lPos > tPos) ? s.substring(tPos + 2, lPos) : ''
+  let pn = '', sn = '', so = ''
+
+  // ANSI MH10.8.2: GS(0x1D)가 필드 구분자, 각 필드는 DI(데이터 식별자)로 시작
+  const fields = raw.split('\x1d')
+
+  if (fields.length > 1) {
+    // GS 구분자가 있는 경우 — 각 필드를 DI로 식별
+    for (const field of fields) {
+      const f = field.replace(/[\x00-\x1c\x1e-\x1f]/g, '')
+      if (f.startsWith('1T') && !so) so = f.slice(2)
+      else if (/^P\d/.test(f) && !pn) pn = f.slice(1)  // P + 숫자 시작 = 파트넘버
+      else if (/^S\d/.test(f) && !sn) sn = f.slice(1)  // S + 숫자 시작 = 시리얼
+    }
+  } else {
+    // GS 없는 경우 — 정규식으로 DI 경계 탐지
+    const s = raw.replace(/[\x00-\x1f]/g, '')
+    // P/N: P 다음 숫자로 시작, S+숫자 나오기 전까지
+    const pnM = s.match(/P(\d[\d\-A-Za-z]+?)(?=S\d)/)
+    // S/N: P값 끝나고 나온 S, 1T 전까지
+    const snM = s.match(/P\d[\d\-A-Za-z]+?S(\d[\d\-A-Za-z]+?)(?=1T)/)
+    // S/O: 1T 이후, 숫자+대문자(다음 DI) 나오기 전까지
+    const soM = s.match(/1T(.+?)(?=\d[A-Z]|$)/)
+    if (pnM) pn = pnM[1]
+    if (snM) sn = snM[1]
+    if (soM) so = soM[1]
+  }
+
   return { pn, sn, so }
 }
 
