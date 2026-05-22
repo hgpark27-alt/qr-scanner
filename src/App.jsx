@@ -182,10 +182,9 @@ export default function App() {
   }, [scanning])
 
   const handleShare = async () => {
-    const text = 'S/N\tP/N\tS/O\n' +
-      [...items].reverse()
-        .map(it => `${it.sn || '-'}\t${it.pn || '-'}\t${it.so || '-'}`)
-        .join('\n')
+    const rows = [...items].reverse()
+    const text = 'No.\tS/N\tP/N\tS/O\n' +
+      rows.map((it, i) => `${i + 1}\t${it.sn || '-'}\t${it.pn || '-'}\t${it.so || '-'}`).join('\n')
     try {
       if (navigator.share) await navigator.share({ text })
       else { await navigator.clipboard.writeText(text); alert('클립보드에 복사됐습니다') }
