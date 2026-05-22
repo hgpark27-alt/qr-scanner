@@ -53,6 +53,7 @@ export default function App() {
       dbgLog('인식: ' + text.slice(0, 60))
       if (!active || seenRef.current.has(text)) return
       seenRef.current.add(text)
+      navigator.vibrate?.(80)
       setItems(prev => [parseLabel(text), ...prev])
     }
 
