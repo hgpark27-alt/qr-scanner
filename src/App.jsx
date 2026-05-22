@@ -3,9 +3,18 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import './App.css'
 
 function parseLabel(raw) {
-  const pn = raw.match(/P(\d{4}-\d{5})/)?.[1] ?? ''
-  const sn = raw.match(/S(\d{3}-\d{4}-\d{4})/)?.[1] ?? ''
-  const so = raw.match(/1T(.*?)L/)?.[1] ?? ''
+  // 제어문자(GS/RS 등) 제거
+  const s = raw.replace(/[\x00-\x1f]/g, '')
+
+  const pPos = s.indexOf('P')
+  const tPos = s.indexOf('1T')
+  const lPos = s.indexOf('L', tPos)
+
+  // 엑셀 공식 동일 로직: MID(s, FIND("P")+12, FIND("1T")-FIND("P")-12)
+  const pn = pPos >= 0 ? s.substring(pPos + 1, pPos + 11) : ''
+  const sn = pPos >= 0 && tPos > pPos ? s.substring(pPos + 12, tPos) : ''
+  const so = tPos >= 0 && lPos > tPos ? s.substring(tPos + 2, lPos) : ''
+
   return { pn, sn, so }
 }
 
