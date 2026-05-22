@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import './App.css'
 
 export default function App() {
@@ -25,7 +25,15 @@ export default function App() {
     const width = window.innerWidth
     const boxSize = Math.min(width - 40, 300)
 
-    const scanner = new Html5Qrcode('reader')
+    const formats = [
+      Html5QrcodeSupportedFormats.QR_CODE,
+      Html5QrcodeSupportedFormats.DATA_MATRIX,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.EAN_13,
+    ]
+
+    const scanner = new Html5Qrcode('reader', { formatsToSupport: formats })
     scannerRef.current = scanner
 
     scanner.start(
