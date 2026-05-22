@@ -10,47 +10,55 @@ function parseLabel(raw) {
 }
 
 export default function App() {
-  const [scanning, setScanning] = useState(false)
-  const [items, setItems]       = useState([])
-  const [error, setError]       = useState(null)
+  const [started, setStarted] = useState(false)
+  const [items, setItems]     = useState([])
+  const [error, setError]     = useState(null)
   const scannerRef = useRef(null)
   const seenRef    = useRef(new Set())
+  const itemsRef   = useRef([])
 
-  const startScan = () => { setError(null); setScanning(true) }
-  const stopScan  = () => { scannerRef.current?.stop().catch(() => {}); setScanning(false) }
-  const clearAll  = () => { setItems([]); seenRef.current.clear() }
+  itemsRef.current = items
 
-  useEffect(() => {
-    if (!scanning) return
-
-    const boxSize = Math.min(window.innerWidth - 40, 280)
+  const launch = async () => {
+    setError(null)
     const scanner = new Html5Qrcode('reader', {
       formatsToSupport: [
         Html5QrcodeSupportedFormats.QR_CODE,
         Html5QrcodeSupportedFormats.DATA_MATRIX,
-      ]
+      ],
+      verbose: false,
     })
     scannerRef.current = scanner
 
-    scanner.start(
-      { facingMode: 'environment' },
-      { fps: 15, qrbox: { width: boxSize, height: boxSize } },
-      (text) => {
-        if (seenRef.current.has(text)) return
-        seenRef.current.add(text)
-        setItems(prev => [...prev, parseLabel(text)])
-      },
-      () => {}
-    ).catch(() => {
+    try {
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10 },           // qrbox 없음 → 화면 전체 스캔
+        (text) => {
+          if (seenRef.current.has(text)) return
+          seenRef.current.add(text)
+          setItems(prev => [parseLabel(text), ...prev])
+        },
+        () => {}
+      )
+      setStarted(true)
+    } catch {
       setError('카메라 권한을 허용해주세요.')
-      setScanning(false)
-    })
+    }
+  }
 
-    return () => { scanner.stop().catch(() => {}) }
-  }, [scanning])
+  const stop = () => {
+    scannerRef.current?.stop().catch(() => {})
+    setStarted(false)
+  }
+
+  const clearAll = () => {
+    setItems([])
+    seenRef.current.clear()
+  }
 
   const handleShare = async () => {
-    const text = items.map((it, i) =>
+    const text = [...items].reverse().map((it, i) =>
       `${i + 1}. S/N: ${it.sn || '-'} | P/N: ${it.pn || '-'} | S/O: ${it.so || '-'}`
     ).join('\n')
     if (navigator.share) {
@@ -60,6 +68,8 @@ export default function App() {
       alert('클립보드에 복사됐습니다')
     }
   }
+
+  useEffect(() => () => { scannerRef.current?.stop().catch(() => {}) }, [])
 
   return (
     <div className="app">
@@ -73,14 +83,14 @@ export default function App() {
         )}
       </div>
 
-      {!scanning ? (
-        <button className="btn-primary" onClick={startScan}>📷 스캔 시작</button>
-      ) : (
-        <div className="scanner-wrap">
-          <p className="scan-hint">QR을 네모 안에 맞춰주세요</p>
-          <div id="reader" />
-          <button className="btn-cancel" onClick={stopScan}>스캔 종료</button>
-        </div>
+      {/* 카메라 영역 — 항상 DOM에 존재 */}
+      <div className="scanner-wrap" style={{ display: started ? 'flex' : 'none' }}>
+        <div id="reader" />
+        <button className="btn-cancel" onClick={stop}>스캔 종료</button>
+      </div>
+
+      {!started && (
+        <button className="btn-primary" onClick={launch}>📷 스캔 시작</button>
       )}
 
       {error && <p className="error">{error}</p>}
@@ -88,7 +98,7 @@ export default function App() {
       {items.length > 0 && (
         <div className="results">
           <p className="count">인식 {items.length}개</p>
-          {[...items].reverse().map((item, i) => (
+          {items.map((item, i) => (
             <div key={i} className="item">
               <span className="item-num">{items.length - i}</span>
               <div className="item-body">

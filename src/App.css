@@ -76,15 +76,13 @@ h1 { font-size: 20px; color: #111; }
   align-items: center;
 }
 
-.scan-hint {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
 #reader { width: 100% !important; border-radius: 10px; overflow: hidden; }
 #reader video { width: 100% !important; height: auto !important; }
 #reader img { display: none; }
+/* html5-qrcode 기본 UI 숨김 */
+#reader__dashboard_section_swaplink,
+#reader__dashboard_section_csr span,
+#reader__camera_selection { display: none !important; }
 
 .error {
   color: #ef4444;
