@@ -18,6 +18,7 @@ export default function App() {
   const [tab, setTab]           = useState('scan')
   const [items, setItems]       = useState([])
   const [error, setError]       = useState(null)
+  const [dbg, setDbg]           = useState('대기중')   // ← 디버그 라인
   const videoRef  = useRef(null)
   const canvasRef = useRef(null)
   const seenRef   = useRef(new Set())
@@ -40,6 +41,7 @@ export default function App() {
     let active     = true
 
     const handleCode = (text) => {
+      setDbg('RAW: ' + text.slice(0, 60))
       if (!active || seenRef.current.has(text)) return
       seenRef.current.add(text)
       setItems(prev => [parseLabel(text), ...prev])
@@ -61,6 +63,7 @@ export default function App() {
 
       video.srcObject = stream
       video.play().catch(() => {})
+      setDbg('카메라 시작됨')
 
       // ② BarcodeDetector 초기화 (카메라 시작 후에 해도 됨)
       let detector = null
@@ -76,19 +79,34 @@ export default function App() {
         } catch {}
       }
 
+      const engine = detector ? 'BarcodeDetector' : 'jsQR'
+      setDbg(`엔진:${engine} | 스캔중...`)
+
       if (!active) return
+
+      let tickCount = 0
 
       // ③ 스캔 루프
       const scan = async () => {
-        if (!active || video.readyState < 2 || !video.videoWidth) return
+        if (!active) return
+        tickCount++
+
+        const rs = video.readyState
+        const vw = video.videoWidth
+
+        if (rs < 2 || !vw) {
+          setDbg(`엔진:${engine} | tick:${tickCount} | readyState:${rs} | 대기`)
+          return
+        }
+
+        setDbg(`엔진:${engine} | tick:${tickCount} | ${vw}px | 스캔중`)
 
         try {
           if (detector) {
-            // BarcodeDetector: video 요소 직접 전달 (canvas 우회 → iOS 호환)
             const codes = await detector.detect(video)
+            if (codes.length === 0) setDbg(`엔진:${engine} | tick:${tickCount} | 코드없음`)
             codes.forEach(c => handleCode(c.rawValue))
           } else {
-            // jsQR 폴백: canvas 경유
             const W = Math.min(video.videoWidth, 960)
             const H = Math.round(video.videoHeight * W / video.videoWidth)
             canvas.width  = W
@@ -96,9 +114,12 @@ export default function App() {
             ctx.drawImage(video, 0, 0, W, H)
             const img  = ctx.getImageData(0, 0, W, H)
             const code = jsQR(img.data, W, H, { inversionAttempts: 'attemptBoth' })
+            if (!code) setDbg(`jsQR | tick:${tickCount} | 코드없음`)
             if (code) handleCode(code.data)
           }
-        } catch {}
+        } catch (e) {
+          setDbg(`에러: ${e.message}`)
+        }
       }
 
       intervalId = setInterval(scan, 150)
@@ -151,6 +172,11 @@ export default function App() {
           ? <button className="btn-stop"  onClick={stopScan}>■ 스캔 종료</button>
           : <button className="btn-start" onClick={startScan}>📷 스캔 시작</button>}
 
+        {/* 디버그 패널 — 원인 파악 후 제거 */}
+        <div style={{ background:'#111', color:'#0f0', fontFamily:'monospace',
+                      fontSize:11, padding:'8px 10px', borderRadius:8, wordBreak:'break-all' }}>
+          {dbg}
+        </div>
         {error && <p className="error">{error}</p>}
         {items.length > 0 && <p className="scan-count">✓ {items.length}개 인식됨</p>}
       </div>
