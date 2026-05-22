@@ -62,16 +62,19 @@ body {
   gap: 12px;
 }
 
-.camera-wrap { width: 100%; position: relative; }
+.camera-wrap { width: 100%; }
 
-.camera-placeholder {
-  width: 100%;
+/* 스캔 전: 크기는 유지하되 안 보이게 (권한 요청용 DOM 필요) */
+.reader-hidden {
   aspect-ratio: 1 / 1;
   border-radius: 12px;
   background: #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.reader-hidden::after {
+  content: '📷';
   font-size: 64px;
 }
 

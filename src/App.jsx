@@ -23,8 +23,6 @@ export default function App() {
 
   const launch = async () => {
     setError(null)
-    setStarted(true)          // 먼저 #reader 를 DOM에 보이게
-    await new Promise(r => setTimeout(r, 100))  // 렌더 대기
     const scanner = new Html5Qrcode('reader', {
       formatsToSupport: [
         Html5QrcodeSupportedFormats.QR_CODE,
@@ -101,8 +99,7 @@ export default function App() {
       {tab === 'scan' && (
         <div className="scan-panel">
           <div className="camera-wrap">
-            <div id="reader" style={{ display: started ? 'block' : 'none' }} />
-            {!started && <div className="camera-placeholder">📷</div>}
+            <div id="reader" className={started ? '' : 'reader-hidden'} />
           </div>
           {started ? (
             <button className="btn-cancel" onClick={stop}>스캔 종료</button>
