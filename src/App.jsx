@@ -8,29 +8,20 @@ setZXingModuleOverrides({ locateFile: (p) => p.endsWith('.wasm') ? wasmUrl : p }
 function parseLabel(raw) {
   let pn = '', sn = '', so = ''
 
-  // ANSI MH10.8.2: GS(0x1D)가 필드 구분자, 각 필드는 DI(데이터 식별자)로 시작
-  const fields = raw.split('\x1d')
+  // ① GS(0x1D) 분리 — ANSI MH10.8.2 표준 필드 구분자
+  for (const field of raw.split('\x1d')) {
+    const f = field.replace(/[\x00-\x1f]/g, '')  // 모든 컨트롤 문자 제거
+    if (f.startsWith('1T') && !so) so = f.slice(2)
+    else if (/^P\d/.test(f) && !pn)  pn = f.slice(1)
+    else if (/^S\d/.test(f) && !sn)  sn = f.slice(1)
+  }
 
-  if (fields.length > 1) {
-    // GS 구분자가 있는 경우 — 각 필드를 DI로 식별
-    for (const field of fields) {
-      const f = field.replace(/[\x00-\x1c\x1e-\x1f]/g, '')
-      if (f.startsWith('1T') && !so) so = f.slice(2)
-      else if (/^P\d/.test(f) && !pn) pn = f.slice(1)  // P + 숫자 시작 = 파트넘버
-      else if (/^S\d/.test(f) && !sn) sn = f.slice(1)  // S + 숫자 시작 = 시리얼
-    }
-  } else {
-    // GS 없는 경우 — 정규식으로 DI 경계 탐지
+  // ② 못 찾은 항목은 연결 문자열에서 정규식으로 추출 (GS 없는 포맷 대응)
+  if (!pn || !sn || !so) {
     const s = raw.replace(/[\x00-\x1f]/g, '')
-    // P/N: P 다음 숫자로 시작, S+숫자 나오기 전까지
-    const pnM = s.match(/P(\d[\d\-A-Za-z]+?)(?=S\d)/)
-    // S/N: P값 끝나고 나온 S, 1T 전까지
-    const snM = s.match(/P\d[\d\-A-Za-z]+?S(\d[\d\-A-Za-z]+?)(?=1T)/)
-    // S/O: 1T 이후, 숫자+대문자(다음 DI) 나오기 전까지
-    const soM = s.match(/1T(.+?)(?=\d[A-Z]|$)/)
-    if (pnM) pn = pnM[1]
-    if (snM) sn = snM[1]
-    if (soM) so = soM[1]
+    if (!pn) { const m = s.match(/P(\d[\d\-A-Za-z]+?)(?=S\d|1T)/);               if (m) pn = m[1] }
+    if (!sn) { const m = s.match(/P\d[\d\-A-Za-z]+?S(\d[\d\-A-Za-z]+?)(?=1T)/); if (m) sn = m[1] }
+    if (!so) { const m = s.match(/1T(.+?)(?=\d[A-Z]|$)/);                         if (m) so = m[1] }
   }
 
   return { pn, sn, so }
