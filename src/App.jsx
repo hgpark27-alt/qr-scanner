@@ -35,14 +35,19 @@ export default function App() {
         Html5QrcodeSupportedFormats.QR_CODE,
         Html5QrcodeSupportedFormats.DATA_MATRIX,
       ],
+      useBarCodeDetectorIfSupported: true, // iOS 네이티브 인식 엔진
       verbose: false,
     })
     scannerRef.current = scanner
 
     try {
       await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10 },           // qrbox 없음 → 화면 전체 스캔
+        {
+          facingMode: 'environment',
+          width:  { ideal: 3840 },  // 최대 해상도 요청
+          height: { ideal: 2160 },
+        },
+        { fps: 10 },
         (text) => {
           if (seenRef.current.has(text)) return
           seenRef.current.add(text)
