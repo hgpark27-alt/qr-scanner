@@ -201,6 +201,8 @@ body {
 .counter--idle   { background: #e4e4e7; color: #a1a1aa; }
 .counter--active { background: #22c55e; color: #fff; }
 .counter--done   { background: #3b82f6; color: #fff; }
+.counter--2d     { font-size: 38px; letter-spacing: -1.5px; }
+.counter--3d     { font-size: 28px; letter-spacing: -1px; }
 .error {
   background: #fef2f2;
   color: #dc2626;

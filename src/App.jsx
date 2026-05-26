@@ -242,7 +242,7 @@ export default function App() {
           : <button className="btn-start" onClick={startScan}>📷 스캔 시작</button>}
 
         {error && <p className="error">{error}</p>}
-        <div className={`scan-counter ${scanning && items.length > 0 ? 'counter--active' : !scanning && items.length > 0 ? 'counter--done' : 'counter--idle'}`}>
+        <div className={`scan-counter ${scanning && items.length > 0 ? 'counter--active' : !scanning && items.length > 0 ? 'counter--done' : 'counter--idle'} ${items.length >= 100 ? 'counter--3d' : items.length >= 10 ? 'counter--2d' : ''}`}>
           {items.length}
         </div>
       </div>
