@@ -242,7 +242,9 @@ export default function App() {
           : <button className="btn-start" onClick={startScan}>📷 스캔 시작</button>}
 
         {error && <p className="error">{error}</p>}
-        {items.length > 0 && <p className="scan-count">✓ {items.length}개 인식됨</p>}
+        <div className={`scan-counter ${scanning && items.length > 0 ? 'counter--active' : !scanning && items.length > 0 ? 'counter--done' : 'counter--idle'}`}>
+          {items.length}
+        </div>
       </div>
 
       <div className="result-panel" style={{ display: tab === 'result' ? 'flex' : 'none' }}>
