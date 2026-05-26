@@ -80,7 +80,8 @@ export default function App() {
       if (!active || seenRef.current.has(text)) return
       seenRef.current.add(text)
       triggerFeedback()
-      setItems(prev => [parseLabel(text), ...prev])
+      const clean = text.replace(/[\x00-\x1f␀-␟]/g, '')
+      setItems(prev => [{ ...parseLabel(text), raw: clean }, ...prev])
     }
 
     // 지정 너비로 캔버스에 그린 뒤 ImageData 반환 (캔버스 재할당 최소화)
@@ -181,14 +182,19 @@ export default function App() {
     }
   }, [scanning])
 
-  const handleShare = async () => {
-    const rows = [...items].reverse()
-    const text = 'No.\tS/N\tP/N\tS/O\n' +
-      rows.map((it, i) => `${i + 1}\t${it.sn || '-'}\t${it.pn || '-'}\t${it.so || '-'}`).join('\n')
+  const share = async (text) => {
     try {
       if (navigator.share) await navigator.share({ text })
       else { await navigator.clipboard.writeText(text); alert('클립보드에 복사됐습니다') }
     } catch {}
+  }
+  const handleShare    = () => {
+    const rows = [...items].reverse()
+    share('No.\tS/N\tP/N\tS/O\n' +
+      rows.map((it, i) => `${i + 1}\t${it.sn || '-'}\t${it.pn || '-'}\t${it.so || '-'}`).join('\n'))
+  }
+  const handleShareRaw = () => {
+    share([...items].reverse().map(it => it.raw).join('\n'))
   }
 
   return (
@@ -247,6 +253,7 @@ export default function App() {
                 <span className="result-count">{items.length}개</span>
                 <div className="result-btns">
                   <button className="btn-share" onClick={handleShare}>공유</button>
+                  <button className="btn-share-raw" onClick={handleShareRaw}>원문</button>
                   <button className="btn-clear" onClick={clearAll}>초기화</button>
                 </div>
               </div>
